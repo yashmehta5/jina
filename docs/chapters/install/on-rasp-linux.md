@@ -18,4 +18,4 @@ On some Linux systems, PyPi may not provide the wheels on that OS. In this case,
 |`grpcio`| `python3-grpcio`| `grpc` |
 |`ruamel.yaml>=0.15.89`| `python3-ruamel.yaml`| `py3-ruamel.yaml`|
 
-If you can have Docker installed on your Linux, then an easier way is probably [run Jina with Docker container](via-docker.md).
+If you can have Docker installed, it's probably easier to [run Jina in a Docker container](via-docker.md).

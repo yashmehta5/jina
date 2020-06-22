@@ -6,7 +6,7 @@ If you have a previously installed version, you can upgrade it by running:
 pip install -U jina
 ```
 
-For Docker user: 
+For Docker users: 
 
 ```bash
 docker pull jinaai/jina
