@@ -22,7 +22,7 @@ class MyTestCase(JinaTestCase):
             subprocess.check_call(['jina', j, '--help'])
         subprocess.check_call(['jina'])
 
-    @pytest.mark.timeout(180)
+    @pytest.mark.timeout(360)
     def test_helloworld(self):
         subprocess.check_call(['jina', 'hello-world'])
 
