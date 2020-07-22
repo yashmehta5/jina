@@ -54,8 +54,8 @@ def export_api(args):
     from .. import __version__
     from ..logging import default_logger
 
-    if args.uses:
-        for yp in args.uses:
+    if args.yaml_path:
+        for yp in args.yaml_path:
             f_name = (yp % __version__) if '%s' in yp else yp
             from ..helper import yaml
             with open(f_name, 'w', encoding='utf8') as fp:
