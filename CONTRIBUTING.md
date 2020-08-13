@@ -25,63 +25,6 @@ In this guide we're going to go through how the steps for each kind of contribut
 
 Make sure you've read through our [README](./README.md), [Jina 101](./docs/chapters/101), and [example tutorials](https://github.com/jina-ai/examples) so you have a good understanding of what Jina is and how it works.
 
-## Bugs and Issues
-
-### Submitting Issues
-
-We love to get issue reports. But we love it even more if they're in the right format. For any bugs you encounter, we need you to:
-
-* **Describe your problem**: What exactly is the bug. Be as clear and concise as possible
-* **Why do you think it's happening?** If you have any insight, here's where to share it
-
-There are also a couple of nice to haves:
-
-* **Environment:** You can find this with `jina --version-full`
-* **Screenshots:** If they're relevant
-
-### Fixing and Discussing Issues
-
-Right now we're working on a list of things we want help with and easy-to-fix bugs suitable for first-time contributors. Stay tuned to:
-
-* [Good first issues](https://github.com/jina-ai/jina/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
-* [Help wanted](https://github.com/jina-ai/jina/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)
-* [Discussion required](https://github.com/jina-ai/jina/issues?q=is%3Aopen+is%3Aissue+label%3A%22discussion+required%22)
-
-## Making Your First Submission 
-
-0. Associate your local git config with your github account. If this is your first time using git you can follow [the steps](#associate-with-github-account).
-1. Fork the Jina repo and clone onto your computer.
-2. Create a [new branch](#naming-your-branch), for example `fix-jina-typo-1`.
-3. Work on this branch to do the fix/improvement.
-4. Commit the changes with the [correct commit style](#commit-message).
-5. Make a pull request. 
-6. Submit your pull request and wait for all checks to pass.
-7. Request reviews from one of [the code owners](CODEOWNERS).
-8. Get a LGTM 👍 and PR gets merged.
-
-**Note:** If you're just fixing a typo or grammatical issue, you can go straight to a pull request.
-
-### Associate with github account
-
-- Confirm username and email on [your profile page](https://github.com/settings/profile).
-- Set git config on your computer.
-
-```shell
-git config user.name "YOUR GITHUB NAME"
-git config user.email "YOUR GITHUB EMAIL"
-```
-
-- (Optional) Reset the commit author if you made commits before you set the git config.
-
-```shell
-git checkout YOUR-WORKED-BRANCH
-git commit --amend --author="YOUR-GITHUB-NAME <YOUR-GITHUB-EMAIL>" --no-edit
-git log  # to confirm the change is effective
-git push --force
-```
-
-What happens after the merge? [Understand the development stage and release cycles here.](RELEASE.md)
-
 ## Naming Conventions
 
 For branches, commits, and PRs we follow some basic naming conventions:
@@ -108,6 +51,63 @@ For each branch, commit, or PR, we need you to specify the type to help us keep 
 - revert
 - style
 - test
+
+## Bugs and Issues
+
+### Submitting Issues
+
+We love to get issue reports. But we love it even more if they're in the right format. For any bugs you encounter, we need you to:
+
+* **Describe your problem**: What exactly is the bug. Be as clear and concise as possible
+* **Why do you think it's happening?** If you have any insight, here's where to share it
+
+There are also a couple of nice to haves:
+
+* **Environment:** You can find this with `jina --version-full`
+* **Screenshots:** If they're relevant
+
+### Fixing and Discussing Issues
+
+Right now we're working on a list of things we want help with and easy-to-fix bugs suitable for first-time contributors. Stay tuned to:
+
+* [Good first issues](https://github.com/jina-ai/jina/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
+* [Help wanted](https://github.com/jina-ai/jina/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)
+* [Discussion required](https://github.com/jina-ai/jina/issues?q=is%3Aopen+is%3Aissue+label%3A%22discussion+required%22)
+
+## Making Your First Submission 
+
+0. Associate your local git config with your GitHub account. If this is your first time using git you can follow [these steps](#associate-with-github-account).
+1. Fork the Jina repo and clone onto your computer.
+2. Create a [new branch](#naming-your-branch), for example `fix-jina-typo-1`.
+3. Work on this branch to do the fix/improvement.
+4. Commit the changes with the [correct commit style](#commit-message).
+5. Make a pull request. 
+6. Submit your pull request and wait for all checks to pass.
+7. Request reviews from one of [the code owners](CODEOWNERS).
+8. Get a LGTM 👍 and PR gets merged.
+
+**Note:** If you're just fixing a typo or grammatical issue, you can go straight to a pull request.
+
+### Associate with GitHub account
+
+- Confirm your username and email on [your profile page](https://github.com/settings/profile).
+- Set git config on your computer.
+
+```shell
+git config user.name "YOUR GITHUB NAME"
+git config user.email "YOUR GITHUB EMAIL"
+```
+
+- (Optional) Reset the commit author if you made commits before you set the git config.
+
+```shell
+git checkout YOUR-WORKED-BRANCH
+git commit --amend --author="YOUR-GITHUB-NAME <YOUR-GITHUB-EMAIL>" --no-edit
+git log  # to confirm the change is effective
+git push --force
+```
+
+What happens after the merge? [Understand the development stage and release cycles here.](RELEASE.md)
 
 ### Naming your Branch
 
