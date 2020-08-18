@@ -4,7 +4,7 @@ Thanks for your interest in contributing to Jina. We're grateful for your initia
 
 I'm Alex C-G, Open Source Evangelist for Jina. I'm all about getting our new contributors up-to-speed, and that's what we'll do below. If you have any feedback or questions, ping me on [Twitter](http://www.twitter.com/alexcg) or get in touch on [Slack](https://jina-ai.slack.com/).
 
-In this guide we're going to go through how the steps for each kind of contribution, and good and bad examples of what to do. We look forward to your contributions!
+In this guide we're going to go through the steps for each kind of contribution, and a few good and bad examples. We look forward to your contributions!
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -17,13 +17,15 @@ In this guide we're going to go through how the steps for each kind of contribut
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## Before you Start
+## 🏁 Before You Start
 
 Make sure you've read through our [README](./README.md), [Jina 101](./docs/chapters/101), and [example tutorials](https://github.com/jina-ai/examples) so you have a good understanding of what Jina is and how it works.
 
-## Bugs and Issues
+## 🐍 Code and Documentation
 
-### Submitting Issues
+### Bugs and Issues
+
+#### Submitting Issues
 
 We love to get issue reports. But we love it even more if they're in the right format. For any bugs you encounter, we need you to:
 
@@ -35,7 +37,7 @@ There are also a couple of nice to haves:
 * **Environment:** You can find this with `jina --version-full`
 * **Screenshots:** If they're relevant
 
-### Fixing and Discussing Issues
+#### Fixing and Discussing Issues
 
 Right now we're working on a list of things we want help with and easy-to-fix bugs suitable for first-time contributors. Stay tuned to:
 
@@ -43,7 +45,7 @@ Right now we're working on a list of things we want help with and easy-to-fix bu
 * [Help wanted](https://github.com/jina-ai/jina/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)
 * [Discussion required](https://github.com/jina-ai/jina/issues?q=is%3Aopen+is%3Aissue+label%3A%22discussion+required%22)
 
-## Making Your First Submission 
+### Making Your First Submission 
 
 1. Fork the Jina repo and clone onto your computer.
 2. Create a [new branch](#naming-your-branch), for example `fix-jina-typo-1`.
@@ -58,7 +60,7 @@ Right now we're working on a list of things we want help with and easy-to-fix bu
 
 What happens after the merge? [Understand the developement stage and release cycles here.](RELEASE.md)
 
-## Naming Conventions
+### Naming Conventions
 
 For branches, commits, and PRs we follow some basic naming conventions:
 
@@ -69,7 +71,7 @@ For branches, commits, and PRs we follow some basic naming conventions:
 * Short (under 70 characters is best)
 * In general, follow the [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0/#summary) guidelines
 
-### Types
+#### Types
 
 For each branch, commit, or PR, we need you to specify the type to help us keep things organized:
  
@@ -85,7 +87,7 @@ For each branch, commit, or PR, we need you to specify the type to help us keep 
 - style
 - test
 
-### Naming your Branch
+#### Naming your Branch
 
 Your branch name should follow the format `type-scope(-issue_id)`:
 
@@ -110,7 +112,7 @@ docs-add-cloud-section-33
 | `NEW-test-1`    | Should be lower case, not descriptive                 |
 | `mybranch-1`    | No type, not descriptive                              |
 
-### Writing your Commit Message
+#### Writing your Commit Message
 
 A good commit message helps us track Jina's development. A Pull Request with a bad commit message will be *rejected* automatically in the CI pipeline.
 
@@ -141,7 +143,7 @@ feat: add remote api
 | `fix(pea):fix network receive of the pea`                                                     | Missing space after `:`            |
 | `hello: add hello-world`                                                                      | Type `hello` is not allowed          |
 
-#### What if I Mess Up?
+##### What if I Mess Up?
 
 We all make mistakes. GitHub has a guide on [rewriting commit messages](https://help.github.com/en/github/committing-changes-to-your-project/changing-a-commit-message) to they can adhere to our standards.
 
@@ -151,11 +153,11 @@ You can also install [commitlint](https://commitlint.js.org/#/) onto your own ma
 echo "<commit message>" | commitlint
 ```
 
-### Naming your Pull Request
+#### Naming your Pull Request
 
 We don't enforce naming of PRs and branches, but we recommend you follow the same style. It can simply be one of your commit messages, just copy/paste it, e.g. `fix(readme): improve the readability and move sections`.
 
-## Testing Jina Locally and on CI
+### Testing Jina Locally and on CI
 
 Locally you can do unittest via:
 
@@ -179,7 +181,35 @@ It prints a list of components the current version of Jina supports, and then ex
 
 Once you submit the PR, your code will be tested in the environment of Python 3.7 and 3.8 with [full exta dependencies](extra-requirements.txt) (`pip install .[all]`) installed.
 
-## Building Documentation Locally
+### Documentation
+
+Good docs make developers happy, and we love happy developers! We've got a few different types of docs:
+
+* General documentation
+* Tutorials/examples
+* Docstrings in Python functions in RST format - generated by Sphinx
+
+#### General Documentation
+
+This covers files like [Jina 101](https://github.com/jina-ai/jina/tree/master/docs/chapters/101), [Input and Output Functions, etc](https://github.com/jina-ai/jina/blob/master/docs/chapters/io/index.md).
+
+These are typically written in Markdown, though some may be in RestructuredText.
+
+If you're just correcting a typo, feel free to make a pull request. For bigger ones, check out our [getting support section](#getting-support) to get in touch and discuss more.
+
+#### Tutorials and Examples
+
+This is anything under the [Jina Examples](https://github.com/jina-ai/examples) repo.
+
+If you're submitting a new example, be sure to get a good grounding in Jina, go through our previous examples, and test your code.
+
+If you're making small tweaks to an existing example, make a pull request. For bigger ones, check out our [getting support section](#getting-support) to get in touch and discuss more.
+
+#### Docstrings
+
+Docstrings are how we document Jina's functions. This is suitable for more experienced documentation writers who understand Python functions, docstring formatting, and RestructuredText format. 
+
+#### Building Documentation Locally
 
 To build documentation locally, you need Docker installed. Clone this repository and run the following command: 
 
@@ -189,7 +219,17 @@ bash ./make-doc.sh serve 8080
 
 The documentation is then available in your browser at [`http://0.0.0.0:8080/`](http://0.0.0.0:8080/).
 
-## Getting Support
+## 🌐 Translations
+
+For translations, please get in touch via our [getting support section](#getting-support).
+
+## ✍️ Blogging
+
+We're always on the lookout for people who want to write about Jina. Please feel free to contact us on Slack! Even better if you already have a Medium blog and portfolio set up!
+
+Please get in touch via our [getting support section](#getting-support) to contribute in this way.
+
+## 💬 Getting Support
 
 We're always happy to lend a hand, answer questions, or listen to feedback. You find us here:
 
@@ -200,6 +240,6 @@ We're also looking at starting online developer hangouts, so you can catch up wi
 
 And you can find me, Jina's Open Source Evangelist on [Twitter](http://twitter.com/alexcg). Feel free to @ me if there's anything you want to know!
 
-## Thank You
+## 🙏 Thank You
 
-Once again, thanks so much for your interest in contributing to Jina. We're excited to have you on board!
+Once again, thanks so much for your interest in contributing to Jina. We're excited to see your contribution!
