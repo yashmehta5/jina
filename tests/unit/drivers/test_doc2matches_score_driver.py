@@ -1,26 +1,23 @@
-import pytest
-
-from jina.drivers.rank import Doc2MatchesScoreDriver
-from jina.executors.rankers import Chunk2DocRanker
-from jina.hub.rankers.MaxRanker import MaxRanker
-from jina.hub.rankers.MinRanker import MinRanker
+from jina.drivers.rank import Doc2MatchesRankDriver
+from jina.executors.rankers import ContentMatchRanker
 from jina.proto import jina_pb2
+from jina.logging import default_logger
 
 
-class SimpleDoc2MatchesScoreDriver(Doc2MatchesScoreDriver):
+class SimpleDoc2MatchesScoreDriver(Doc2MatchesRankDriver):
 
     @property
     def exec_fn(self):
         return self._exec_fn
 
 
-class MockLengthRanker(Chunk2DocRanker):
+class MockLengthRanker(ContentMatchRanker):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.required_keys = {'length'}
+        self.required_keys.add('length')
 
-    def _get_score(self, match_idx, query_chunk_meta, match_chunk_meta, *args, **kwargs):
-        return match_idx[0][self.col_doc_id], match_chunk_meta[match_idx[0][self.col_chunk_id]]['length']
+    def _get_score(self, query_meta, match_meta, *args, **kwargs):
+        return match_meta['length']
 
 
 def create_document_to_score_same_depth_level():
@@ -42,21 +39,21 @@ def create_document_to_score_same_depth_level():
 
     match3 = doc.matches.add()
     match3.id = 3
-    match3.parent_id = 20
+    match3.parent_id = 30
     match3.length = 4
     match3.score.ref_id = doc.id
     match3.score.value = 40
 
     match4 = doc.matches.add()
     match4.id = 4
-    match4.parent_id = 30
+    match4.parent_id = 40
     match4.length = 2
     match4.score.ref_id = doc.id
     match4.score.value = 20
 
     match5 = doc.matches.add()
     match5.id = 4
-    match5.parent_id = 30
+    match5.parent_id = 50
     match5.length = 1
     match5.score.ref_id = doc.id
     match5.score.value = 10
@@ -71,7 +68,10 @@ def test_collect_matches2doc_ranker_driver_mock_ranker():
     driver.attach(executor=executor, pea=None)
     matches = doc.matches
     driver._apply_all(matches, context_doc=doc)
-    assert matches[0].score.operands[0] is not None
+    print(matches[0].score.operands)
+    assert matches[0].score.operands[0].ref_id == 1
+    assert matches[0].score.operands[0].value == 3
+    assert matches[0].score.operands[0].op_name == "MockLengthRanker"
     # assert len(doc.matches) == 2
     # assert doc.matches[0].id == 20
     # assert doc.matches[0].score.value == 3

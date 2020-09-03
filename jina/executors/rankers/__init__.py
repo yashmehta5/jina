@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (c) 2020 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Dict
+from typing import Any, Dict, List
 
 import numpy as np
 
@@ -94,3 +94,37 @@ class Chunk2DocRanker(BaseRanker):
 
     def get_doc_id(self, match_with_same_doc_id):
         return match_with_same_doc_id[0, self.col_doc_id]
+
+
+class ContentMatchRanker(BaseRanker):
+    """ A :class:`ContentMatchRanker` calculates a score on the query-match pair.
+
+    """
+    required_keys = {'id'}  #: a set of ``str``, key-values to extracted from the chunk-level protobuf message
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def score(self, query_meta: Dict[str, Any], matches_meta: List[Dict[str, Any]]) -> Dict[str, float]:
+        from jina.logging import default_logger
+        default_logger.info("blabal")
+        default_logger.info(matches_meta)
+        results = [
+            (match_meta['id'], self._get_score(query_meta, match_meta))
+            for match_meta in matches_meta
+        ]
+        default_logger.info(results)
+        return self.sort_doc_by_score(results)
+
+    def _get_score(self, query_meta, match_meta, *args, **kwargs):
+        raise NotImplementedError
+
+    @staticmethod
+    def sort_doc_by_score(r):
+        """
+        Sort a list of (``doc_id``, ``score``) tuples by the ``score``.
+        :return: an `np.ndarray` in the shape of [N x 2], where `N` in the length of the input list.
+        """
+        r = np.array(r, dtype=np.float64)
+        r = r[r[:, -1].argsort()[::-1]]
+        return r

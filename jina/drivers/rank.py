@@ -148,7 +148,7 @@ class CollectMatches2DocRankDriver(BaseRankDriver):
                 r.score.op_name = exec.__class__.__name__
 
 
-class Doc2MatchesScoreDriver(BaseRankDriver):
+class Doc2MatchesRankDriver(BaseRankDriver):
     """Extract matches from documents and use the executor to add scores to the ``scores.operands`` field.
 
     Input-Output ::
@@ -177,23 +177,17 @@ class Doc2MatchesScoreDriver(BaseRankDriver):
         if context_doc is None:
             return
 
-        match_idx = []
-        query_meta = {}
-        match_meta = {}
-        query_meta[context_doc.id] = pb_obj2dict(context_doc, self.exec.required_keys)
+        query_meta = pb_obj2dict(context_doc, self.exec.required_keys)
+        matches_meta = []
         for match in docs:
-            match_idx.append((match.parent_id, match.id, context_doc.id, match.score.value))
-            match_meta[match.id] = pb_obj2dict(match, self.exec.required_keys)
+            matches_meta.append(pb_obj2dict(match, self.exec.required_keys))
 
-        # np.uint32 uses 32 bits. np.float32 uses 23 bit mantissa, so integer greater than 2^23 will have their
-        # least significant bits truncated.
-        if match_idx:
-            match_idx = np.array(match_idx, dtype=np.float64)
+        if matches_meta:
+            match_scores = dict(self.exec_fn(query_meta, matches_meta))
 
-            docs_scores = dict(self.exec_fn(match_idx, query_meta, match_meta))
             for match in context_doc.matches:
-                if match.id in docs_scores:
+                if match.id in match_scores:
                     new_score = match.score.operands.add()
                     new_score.ref_id = context_doc.id
-                    new_score.value = docs_scores[match.id]
-                    new_score.op_name = exec.__class__.__name__
+                    new_score.value = match_scores[match.id]
+                    new_score.op_name = self.exec.__class__.__name__
