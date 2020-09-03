@@ -146,3 +146,54 @@ class CollectMatches2DocRankDriver(BaseRankDriver):
                 r.score.ref_id = context_doc.id  # label the score is computed against doc
                 r.score.value = score
                 r.score.op_name = exec.__class__.__name__
+
+
+class Doc2MatchesScoreDriver(BaseRankDriver):
+    """Extract matches from documents and use the executor to add scores to the ``scores.operands`` field.
+
+    Input-Output ::
+        Input:
+        document: {adjacency: k-1}
+            |- matches: {adjacency: k}
+
+        Output:
+        document: {adjacency: k-1}
+            |- matches: {adjacency: k; with added scores}
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(traverse_on=('matches',), *args, **kwargs)
+        self.recursion_order = 'post'
+
+    def _apply_all(self, docs: Iterable['jina_pb2.Document'], context_doc: 'jina_pb2.Document', *args, **kwargs):
+        """
+
+        :param docs: the matches of the ``context_doc``, they are at depth_level ``k``
+        :param context_doc: the owner of ``docs``, it is at depth_level ``k-1``
+        :return:
+        """
+
+        # if at the top-level already, no need to aggregate further
+        if context_doc is None:
+            return
+
+        match_idx = []
+        query_meta = {}
+        match_meta = {}
+        query_meta[context_doc.id] = pb_obj2dict(context_doc, self.exec.required_keys)
+        for match in docs:
+            match_idx.append((match.parent_id, match.id, context_doc.id, match.score.value))
+            match_meta[match.id] = pb_obj2dict(match, self.exec.required_keys)
+
+        # np.uint32 uses 32 bits. np.float32 uses 23 bit mantissa, so integer greater than 2^23 will have their
+        # least significant bits truncated.
+        if match_idx:
+            match_idx = np.array(match_idx, dtype=np.float64)
+
+            docs_scores = dict(self.exec_fn(match_idx, query_meta, match_meta))
+            for match in context_doc.matches:
+                if match.id in docs_scores:
+                    new_score = match.score.operands.add()
+                    new_score.ref_id = context_doc.id
+                    new_score.value = docs_scores[match.id]
+                    new_score.op_name = exec.__class__.__name__
