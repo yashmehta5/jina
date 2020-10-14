@@ -26,7 +26,7 @@ def new_doc_hash(doc: 'Document') -> int:
 
 
 def new_doc_id(doc: 'Document') -> str:
-    """ Generate a new hexdigest based on the content of the document.
+    """Generate a new hexdigest based on the content of the document.
 
     .. note::
         Always use it AFTER you fill in the content of the document

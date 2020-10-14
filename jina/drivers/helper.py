@@ -55,7 +55,9 @@ def array2pb(x: 'np.ndarray', quantize: str = None) -> 'jina_pb2.NdArray':
         blob.quantization = jina_pb2.NdArray.FP16
         blob.original_dtype = x.dtype.name
         x = x.astype(np.float16)
-    elif quantize == 'uint8' and (x.dtype == np.float32 or x.dtype == np.float64 or x.dtype == np.float16):
+    elif quantize == 'uint8' and (
+        x.dtype == np.float32 or x.dtype == np.float64 or x.dtype == np.float16
+    ):
         blob.quantization = jina_pb2.NdArray.UINT8
         blob.max_val, blob.min_val = x.max(), x.min()
         blob.original_dtype = x.dtype.name
@@ -88,9 +90,13 @@ def extract_docs(docs: Iterable['jina_pb2.Document'], embedding: bool) -> Tuple:
     bad_doc_ids = []
 
     if embedding:
-        _extract_fn = lambda doc: (doc.embedding.buffer or None) and pb2array(doc.embedding)
+        _extract_fn = lambda doc: (doc.embedding.buffer or None) and pb2array(
+            doc.embedding
+        )
     else:
-        _extract_fn = lambda doc: doc.text or doc.buffer or (doc.blob and pb2array(doc.blob))
+        _extract_fn = (
+            lambda doc: doc.text or doc.buffer or (doc.blob and pb2array(doc.blob))
+        )
 
     for doc in docs:
         content = _extract_fn(doc)
@@ -115,6 +121,7 @@ def routes2str(msg: 'jina_pb2.Message', flag_current: bool = False) -> str:
     if flag_current:
         route_str.append('⚐')
     from ..helper import colored
+
     return colored('▸', 'green').join(route_str)
 
 
@@ -171,11 +178,15 @@ class DocGroundtruthPair:
         # TODO: Should we expect this assert to be done
         #  (RankingEvaluation may work with a different lenght of groundtruth matches as the one returned)
         assert len(self.doc.matches) == len(self.groundtruth.matches)
-        return [DocGroundtruthPair(doc, groundtruth) for doc, groundtruth in
-                zip(self.doc.matches, self.groundtruth.matches)]
+        return [
+            DocGroundtruthPair(doc, groundtruth)
+            for doc, groundtruth in zip(self.doc.matches, self.groundtruth.matches)
+        ]
 
     @property
     def chunks(self):
         assert len(self.doc.chunks) == len(self.groundtruth.chunks)
-        return [DocGroundtruthPair(doc, groundtruth) for doc, groundtruth in
-                zip(self.doc.chunks, self.groundtruth.chunks)]
+        return [
+            DocGroundtruthPair(doc, groundtruth)
+            for doc, groundtruth in zip(self.doc.chunks, self.groundtruth.chunks)
+        ]

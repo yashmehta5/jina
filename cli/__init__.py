@@ -12,13 +12,20 @@ def _get_run_args(print_args: bool = True):
     parser = get_main_parser()
     if len(sys.argv) > 1:
         from argparse import _StoreAction, _StoreTrueAction
+
         args = parser.parse_args()
         p = parser._actions[-1].choices[sys.argv[1]]
-        default_args = {a.dest: a.default for a in p._actions if
-                        isinstance(a, _StoreAction) or isinstance(a, _StoreTrueAction)}
+        default_args = {
+            a.dest: a.default
+            for a in p._actions
+            if isinstance(a, _StoreAction) or isinstance(a, _StoreTrueAction)
+        }
         if print_args:
             from pkg_resources import resource_filename
-            with open(resource_filename('jina', '/'.join(('resources', 'jina.logo')))) as fp:
+
+            with open(
+                resource_filename('jina', '/'.join(('resources', 'jina.logo')))
+            ) as fp:
                 logo_str = fp.read()
             param_str = []
             for k, v in sorted(vars(args).items()):
@@ -28,7 +35,9 @@ def _get_run_args(print_args: bool = True):
                 else:
                     param_str.append('🔧️ ' + colored(j, 'blue', 'on_yellow'))
             param_str = '\n'.join(param_str)
-            default_logger.info(f'\n{logo_str}\n▶️  {" ".join(sys.argv)}\n{param_str}\n')
+            default_logger.info(
+                f'\n{logo_str}\n▶️  {" ".join(sys.argv)}\n{param_str}\n'
+            )
         return args
     else:
         parser.print_help()
@@ -37,6 +46,7 @@ def _get_run_args(print_args: bool = True):
 
 def _quick_ac_lookup():
     from .autocomplete import ac_table
+
     if len(sys.argv) > 1:
         if sys.argv[1] == 'commands':
             for k in ac_table['commands']:
@@ -59,5 +69,6 @@ def main():
     """The main entrypoint of the CLI """
     _quick_ac_lookup()
     from . import api
+
     args = _get_run_args()
     getattr(api, args.cli.replace('-', '_'))(args)

@@ -30,8 +30,7 @@ def test_incremental_indexing_vecindexers(tmpdir):
     total_docs = 10
     duplicate_docs, num_uniq_docs = get_duplicate_docs(num_docs=total_docs)
 
-    f = (Flow()
-         .add(uses=os.path.join(cur_dir, 'uniq_vectorindexer.yml'), name='vec_idx'))
+    f = Flow().add(uses=os.path.join(cur_dir, 'uniq_vectorindexer.yml'), name='vec_idx')
 
     with f:
         f.index(duplicate_docs)
@@ -48,8 +47,7 @@ def test_incremental_indexing_docindexers(tmpdir):
     total_docs = 10
     duplicate_docs, num_uniq_docs = get_duplicate_docs(num_docs=total_docs)
 
-    f = (Flow()
-         .add(uses=os.path.join(cur_dir, 'uniq_docindexer.yml'), shards=1))
+    f = Flow().add(uses=os.path.join(cur_dir, 'uniq_docindexer.yml'), shards=1)
 
     with f:
         f.index(duplicate_docs)

@@ -23,7 +23,6 @@ class BaseDevice:
             please use the environment variable `CUDA_VISIBLE_DEVICES`.
         """
 
-
     @abstractmethod
     def to_device(self, *args, **kwargs):
         """Move the computation from GPU to CPU or vice versa"""
@@ -62,6 +61,7 @@ class TorchDevice(BaseDevice):
     @cached_property
     def device(self):
         import torch
+
         return torch.device('cuda:0') if self.on_gpu else torch.device('cpu')
 
     def to_device(self, model, *args, **kwargs):
@@ -102,10 +102,12 @@ class PaddleDevice(BaseDevice):
     @cached_property
     def device(self):
         import paddle.fluid as fluid
+
         return fluid.CUDAPlace(0) if self.on_gpu else fluid.CPUPlace()
 
     def to_device(self):
         import paddle.fluid as fluid
+
         return fluid.Executor(self.device)
 
 
@@ -139,6 +141,7 @@ class TFDevice(BaseDevice):
     @cached_property
     def device(self):
         import tensorflow as tf
+
         cpus = tf.config.experimental.list_physical_devices(device_type='CPU')
         gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
         if self.on_gpu and len(gpus) > 0:
@@ -147,6 +150,7 @@ class TFDevice(BaseDevice):
 
     def to_device(self):
         import tensorflow as tf
+
         tf.config.experimental.set_visible_devices(devices=self.device)
 
 
@@ -200,13 +204,19 @@ class FaissDevice(BaseDevice):
     @cached_property
     def device(self):
         import faiss
+
         # For now, consider only one GPU, do not distribute the index
         return faiss.StandardGpuResources() if self.on_gpu else None
 
     def to_device(self, index, *args, **kwargs):
         import faiss
+
         device = self.device
-        return faiss.index_cpu_to_gpu(device, 0, index, None) if device is not None else index
+        return (
+            faiss.index_cpu_to_gpu(device, 0, index, None)
+            if device is not None
+            else index
+        )
 
 
 class MindsporeDevice(BaseDevice):
@@ -214,11 +224,12 @@ class MindsporeDevice(BaseDevice):
     :class:`MindsporeDevice` implements the base classes for the executors using :mod:`mindspore` library. The
         common setups go into this class.
     """
-    
+
     @cached_property
     def device(self):
         return 'GPU' if self.on_gpu else 'CPU'
-    
+
     def to_device(self):
         import mindspore.context as context
+
         context.set_context(mode=context.GRAPH_MODE, device_target=self.device)

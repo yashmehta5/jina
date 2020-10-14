@@ -3,8 +3,14 @@ import os
 import numpy as np
 import pytest
 
-from jina.executors.decorators import as_update_method, as_train_method, as_ndarray, batching, \
-    require_train, store_init_kwargs
+from jina.executors.decorators import (
+    as_update_method,
+    as_train_method,
+    as_ndarray,
+    batching,
+    require_train,
+    store_init_kwargs,
+)
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 

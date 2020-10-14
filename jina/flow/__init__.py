@@ -21,7 +21,13 @@ from ruamel.yaml import StringIO
 from .. import JINA_GLOBAL
 from ..enums import FlowBuildLevel, FlowOptimizeLevel
 from ..excepts import FlowTopologyError, FlowMissingPodError, FlowBuildLevelError
-from ..helper import yaml, expand_env_var, get_non_defaults_args, deprecated_alias, complete_path
+from ..helper import (
+    yaml,
+    expand_env_var,
+    get_non_defaults_args,
+    deprecated_alias,
+    complete_path,
+)
 from ..logging import JinaLogger
 from ..logging.sse import start_sse_logger
 from ..peapods.pod import SocketType, FlowPod, GatewayFlowPod
@@ -56,8 +62,9 @@ def build_required(required_level: 'FlowBuildLevel'):
                     return func(self, *args, **kwargs)
                 else:
                     raise FlowBuildLevelError(
-                        'build_level check failed for %r, required level: %s, actual level: %s' % (
-                            func, required_level, self._build_level))
+                        'build_level check failed for %r, required level: %s, actual level: %s'
+                        % (func, required_level, self._build_level)
+                    )
             else:
                 raise AttributeError(f'{self!r} has no attribute "_build_level"')
 
@@ -66,8 +73,11 @@ def build_required(required_level: 'FlowBuildLevel'):
     return __build_level
 
 
-def _traverse_graph(op_flow: 'Flow', outgoing_map: Dict[str, List[str]],
-                    func: Callable[['Flow', str, str], None]) -> 'Flow':
+def _traverse_graph(
+    op_flow: 'Flow',
+    outgoing_map: Dict[str, List[str]],
+    func: Callable[['Flow', str, str], None],
+) -> 'Flow':
     _outgoing_idx = dict.fromkeys(outgoing_map.keys(), 0)
     stack = deque()
     stack.append('gateway')
@@ -109,36 +119,54 @@ def _build_flow(op_flow: 'Flow', outgoing_map: Dict[str, List[str]]) -> 'Flow':
     return _traverse_graph(op_flow, outgoing_map, _build_two_connections)
 
 
-def _optimize_flow(op_flow, outgoing_map: Dict[str, List[str]], pod_edges: {str, str}) -> 'Flow':
-    def _optimize_two_connections(flow: 'Flow', start_node_name: str, end_node_name: str):
+def _optimize_flow(
+    op_flow, outgoing_map: Dict[str, List[str]], pod_edges: {str, str}
+) -> 'Flow':
+    def _optimize_two_connections(
+        flow: 'Flow', start_node_name: str, end_node_name: str
+    ):
         start_node = flow._pod_nodes[start_node_name]
         end_node = flow._pod_nodes[end_node_name]
-        edges_with_same_start = [ed for ed in pod_edges if ed[0].startswith(start_node_name)]
+        edges_with_same_start = [
+            ed for ed in pod_edges if ed[0].startswith(start_node_name)
+        ]
         edges_with_same_end = [ed for ed in pod_edges if ed[1].endswith(end_node_name)]
         if len(edges_with_same_start) > 1 or len(edges_with_same_end) > 1:
-            flow.logger.info(f'Connection between {start_node_name} and {end_node_name} cannot be optimized')
+            flow.logger.info(
+                f'Connection between {start_node_name} and {end_node_name} cannot be optimized'
+            )
         else:
             if start_node_name == 'gateway':
-                if flow.args.optimize_level > FlowOptimizeLevel.IGNORE_GATEWAY and end_node.is_head_router:
+                if (
+                    flow.args.optimize_level > FlowOptimizeLevel.IGNORE_GATEWAY
+                    and end_node.is_head_router
+                ):
                     flow.logger.info(
-                        f'Node {end_node_name} connects to tail of {start_node_name}')
+                        f'Node {end_node_name} connects to tail of {start_node_name}'
+                    )
                     end_node.connect_to_tail_of(start_node)
             elif end_node_name == 'gateway':
-                if flow.args.optimize_level > FlowOptimizeLevel.IGNORE_GATEWAY and \
-                        start_node.is_tail_router and start_node.tail_args.num_part <= 1:
+                if (
+                    flow.args.optimize_level > FlowOptimizeLevel.IGNORE_GATEWAY
+                    and start_node.is_tail_router
+                    and start_node.tail_args.num_part <= 1
+                ):
                     # connect gateway directly to peas only if this is unblock router
                     # as gateway can not block & reduce message
                     flow.logger.info(
-                        f'Node {start_node_name} connects to head of {end_node_name}')
+                        f'Node {start_node_name} connects to head of {end_node_name}'
+                    )
                     start_node.connect_to_head_of(end_node)
             else:
                 if end_node.is_head_router and not start_node.is_tail_router:
                     flow.logger.info(
-                        f'Node {end_node_name} connects to tail of {start_node_name}')
+                        f'Node {end_node_name} connects to tail of {start_node_name}'
+                    )
                     end_node.connect_to_tail_of(start_node)
                 elif start_node.is_tail_router and start_node.tail_args.num_part <= 1:
                     flow.logger.info(
-                        f'Node {start_node_name} connects to head of {end_node_name}')
+                        f'Node {start_node_name} connects to head of {end_node_name}'
+                    )
                     start_node.connect_to_head_of(end_node)
 
     if op_flow.args.optimize_level > FlowOptimizeLevel.NONE:
@@ -176,14 +204,18 @@ class Flow(ExitStack):
         self._pod_nodes = OrderedDict()  # type: Dict[str, 'FlowPod']
         self._build_level = FlowBuildLevel.EMPTY
         self._pod_name_counter = 0
-        self._last_changed_pod = ['gateway']  #: default first pod is gateway, will add when build()
+        self._last_changed_pod = [
+            'gateway'
+        ]  #: default first pod is gateway, will add when build()
         self._update_args(args, **kwargs)
 
     def _update_args(self, args, **kwargs):
         from ..parser import set_flow_parser
+
         _flow_parser = set_flow_parser()
         if args is None:
             from ..helper import get_parsed_args
+
             _, args, _ = get_parsed_args(kwargs, _flow_parser, 'Flow')
 
         self.args = args
@@ -239,7 +271,9 @@ class Flow(ExitStack):
         """
         f = filename
         if not f:
-            f = tempfile.NamedTemporaryFile('w', delete=False, dir=os.environ.get('JINA_EXECUTOR_WORKDIR', None)).name
+            f = tempfile.NamedTemporaryFile(
+                'w', delete=False, dir=os.environ.get('JINA_EXECUTOR_WORKDIR', None)
+            ).name
         yaml.register_class(Flow)
         # yaml.sort_base_mapping_type_on_output = False
         # yaml.representer.add_representer(OrderedDict, yaml.Representer.represent_dict)
@@ -264,7 +298,8 @@ class Flow(ExitStack):
         :return: an executor object
         """
         yaml.register_class(Flow)
-        if not filename: raise FileNotFoundError
+        if not filename:
+            raise FileNotFoundError
         if isinstance(filename, str):
             # deserialize from the yaml
             filename = complete_path(filename)
@@ -278,7 +313,8 @@ class Flow(ExitStack):
     def _get_instance_from_yaml(cls, constructor, node):
 
         data = ruamel.yaml.constructor.SafeConstructor.construct_mapping(
-            constructor, node, deep=True)
+            constructor, node, deep=True
+        )
 
         p = data.get('with', {})  # type: Dict[str, Any]
         a = p.pop('args') if 'args' in p else ()
@@ -316,7 +352,9 @@ class Flow(ExitStack):
         if isinstance(endpoint, list) or isinstance(endpoint, tuple):
             for idx, s in enumerate(endpoint):
                 if s == pod_name:
-                    raise FlowTopologyError('the income/output of a pod can not be itself')
+                    raise FlowTopologyError(
+                        'the income/output of a pod can not be itself'
+                    )
         else:
             raise ValueError(f'endpoint={endpoint} is not parsable')
         return set(endpoint)
@@ -352,8 +390,15 @@ class Flow(ExitStack):
         kwargs['name'] = 'gateway'
         self._pod_nodes[pod_name] = GatewayFlowPod(kwargs, needs)
 
-    def needs(self, needs: Union[Tuple[str], List[str]], uses: str = '_merge', name: str = 'joiner', *args,
-              copy_flow: bool = True, **kwargs) -> 'Flow':
+    def needs(
+        self,
+        needs: Union[Tuple[str], List[str]],
+        uses: str = '_merge',
+        name: str = 'joiner',
+        *args,
+        copy_flow: bool = True,
+        **kwargs,
+    ) -> 'Flow':
         """
         Add a blocker to the flow, wait until all peas defined in **needs** completed.
 
@@ -365,13 +410,17 @@ class Flow(ExitStack):
         op_flow = copy.deepcopy(self) if copy_flow else self
 
         if len(needs) <= 1:
-            raise FlowTopologyError('no need to wait for a single service, need len(needs) > 1')
+            raise FlowTopologyError(
+                'no need to wait for a single service, need len(needs) > 1'
+            )
         return op_flow.add(name=name, uses=uses, needs=needs, *args, **kwargs)
 
-    def add(self,
-            needs: Union[str, Tuple[str], List[str]] = None,
-            copy_flow: bool = True,
-            **kwargs) -> 'Flow':
+    def add(
+        self,
+        needs: Union[str, Tuple[str], List[str]] = None,
+        copy_flow: bool = True,
+        **kwargs,
+    ) -> 'Flow':
         """
         Add a pod to the current flow object and return the new modified flow object.
         The attribute of the pod can be later changed with :py:meth:`set` or deleted with :py:meth:`remove`
@@ -400,9 +449,13 @@ class Flow(ExitStack):
 
         if not pod_name.isidentifier():
             # hyphen - can not be used in the name
-            raise ValueError(f'name: {pod_name} is invalid, please follow the python variable name conventions')
+            raise ValueError(
+                f'name: {pod_name} is invalid, please follow the python variable name conventions'
+            )
 
-        needs = op_flow._parse_endpoints(op_flow, pod_name, needs, connect_to_last_pod=True)
+        needs = op_flow._parse_endpoints(
+            op_flow, pod_name, needs, connect_to_last_pod=True
+        )
 
         kwargs.update(op_flow._common_kwargs)
         kwargs['name'] = pod_name
@@ -450,7 +503,9 @@ class Flow(ExitStack):
         for end, pod in op_flow._pod_nodes.items():
             for start in pod.needs:
                 if start not in op_flow._pod_nodes:
-                    raise FlowMissingPodError(f'{start} is not in this flow, misspelled name?')
+                    raise FlowMissingPodError(
+                        f'{start} is not in this flow, misspelled name?'
+                    )
                 _outgoing_map[start].append(end)
                 _pod_edges.add((start, end))
 
@@ -471,34 +526,44 @@ class Flow(ExitStack):
             self._stop_log_server()
         self._build_level = FlowBuildLevel.EMPTY
         self.logger.success(
-            f'flow is closed and all resources should be released already, current build level is {self._build_level}')
+            f'flow is closed and all resources should be released already, current build level is {self._build_level}'
+        )
         self.logger.close()
 
     def _stop_log_server(self):
         import urllib.request
+
         try:
             # it may have been shutdown from the outside
             urllib.request.urlopen(JINA_GLOBAL.logserver.shutdown, timeout=5)
         except Exception as ex:
-            self.logger.info(f'Failed to connect to shutdown log sse server: {repr(ex)}')
+            self.logger.info(
+                f'Failed to connect to shutdown log sse server: {repr(ex)}'
+            )
 
     def _start_log_server(self):
         try:
             import urllib.request
             import flask, flask_cors
-            self._sse_logger = threading.Thread(name='sentinel-sse-logger',
-                                                target=start_sse_logger, daemon=True,
-                                                args=(self.args.logserver_config,
-                                                      self.yaml_spec))
+
+            self._sse_logger = threading.Thread(
+                name='sentinel-sse-logger',
+                target=start_sse_logger,
+                daemon=True,
+                args=(self.args.logserver_config, self.yaml_spec),
+            )
             self._sse_logger.start()
             time.sleep(1)
             response = urllib.request.urlopen(JINA_GLOBAL.logserver.ready, timeout=5)
             if response.status == 200:
-                self.logger.success(f'logserver is started and available at {JINA_GLOBAL.logserver.address}')
+                self.logger.success(
+                    f'logserver is started and available at {JINA_GLOBAL.logserver.address}'
+                )
         except ModuleNotFoundError:
             self.logger.error(
                 f'sse logserver can not start because of "flask" and "flask_cors" are missing, '
-                f'use pip install "jina[http]" (with double quotes) to install the dependencies')
+                f'use pip install "jina[http]" (with double quotes) to install the dependencies'
+            )
         except Exception as ex:
             self.logger.error(f'logserver fails to start: {repr(ex)}')
 
@@ -521,8 +586,12 @@ class Flow(ExitStack):
         for v in self._pod_nodes.values():
             self.enter_context(v)
 
-        self.logger.info(f'{self.num_pods} Pods (i.e. {self.num_peas} Peas) are running in this Flow')
-        self.logger.success(f'flow is now ready for use, current build_level is {self._build_level}')
+        self.logger.info(
+            f'{self.num_pods} Pods (i.e. {self.num_peas} Peas) are running in this Flow'
+        )
+        self.logger.success(
+            f'flow is now ready for use, current build_level is {self._build_level}'
+        )
 
         return self
 
@@ -560,6 +629,7 @@ class Flow(ExitStack):
     def _get_client(self, **kwargs):
         kwargs.update(self._common_kwargs)
         from ..clients import py_client
+
         if 'port_expose' not in kwargs:
             kwargs['port_expose'] = self.port_expose
         if 'host' not in kwargs:
@@ -567,9 +637,14 @@ class Flow(ExitStack):
         return py_client(**kwargs)
 
     @deprecated_alias(buffer='input_fn', callback='output_fn')
-    def train(self, input_fn: Union[Iterator['jina_pb2.Document'], Iterator[bytes], Callable] = None,
-              output_fn: Callable[['jina_pb2.Message'], None] = None,
-              **kwargs):
+    def train(
+        self,
+        input_fn: Union[
+            Iterator['jina_pb2.Document'], Iterator[bytes], Callable
+        ] = None,
+        output_fn: Callable[['jina_pb2.Message'], None] = None,
+        **kwargs,
+    ):
         """Do training on the current flow
 
         It will start a :py:class:`CLIClient` and call :py:func:`train`.
@@ -606,9 +681,15 @@ class Flow(ExitStack):
         """
         self._get_client(**kwargs).train(input_fn, output_fn, **kwargs)
 
-    def index_ndarray(self, array: 'np.ndarray', axis: int = 0, size: int = None, shuffle: bool = False,
-                      output_fn: Callable[['jina_pb2.Message'], None] = None,
-                      **kwargs):
+    def index_ndarray(
+        self,
+        array: 'np.ndarray',
+        axis: int = 0,
+        size: int = None,
+        shuffle: bool = False,
+        output_fn: Callable[['jina_pb2.Message'], None] = None,
+        **kwargs,
+    ):
         """Using numpy ndarray as the index source for the current flow
 
         :param array: the numpy ndarray data source
@@ -619,11 +700,20 @@ class Flow(ExitStack):
         :param kwargs: accepts all keyword arguments of `jina client` CLI
         """
         from ..clients.python.io import input_numpy
-        self._get_client(**kwargs).index(input_numpy(array, axis, size, shuffle), output_fn, **kwargs)
 
-    def search_ndarray(self, array: 'np.ndarray', axis: int = 0, size: int = None, shuffle: bool = False,
-                       output_fn: Callable[['jina_pb2.Message'], None] = None,
-                       **kwargs):
+        self._get_client(**kwargs).index(
+            input_numpy(array, axis, size, shuffle), output_fn, **kwargs
+        )
+
+    def search_ndarray(
+        self,
+        array: 'np.ndarray',
+        axis: int = 0,
+        size: int = None,
+        shuffle: bool = False,
+        output_fn: Callable[['jina_pb2.Message'], None] = None,
+        **kwargs,
+    ):
         """Use a numpy ndarray as the query source for searching on the current flow
 
         :param array: the numpy ndarray data source
@@ -634,13 +724,22 @@ class Flow(ExitStack):
         :param kwargs: accepts all keyword arguments of `jina client` CLI
         """
         from ..clients.python.io import input_numpy
-        self._get_client(**kwargs).search(input_numpy(array, axis, size, shuffle), output_fn, **kwargs)
 
-    def index_lines(self, lines: Iterator[str] = None, filepath: str = None, size: int = None,
-                    sampling_rate: float = None, read_mode='r',
-                    output_fn: Callable[['jina_pb2.Message'], None] = None,
-                    **kwargs):
-        """ Use a list of lines as the index source for indexing on the current flow
+        self._get_client(**kwargs).search(
+            input_numpy(array, axis, size, shuffle), output_fn, **kwargs
+        )
+
+    def index_lines(
+        self,
+        lines: Iterator[str] = None,
+        filepath: str = None,
+        size: int = None,
+        sampling_rate: float = None,
+        read_mode='r',
+        output_fn: Callable[['jina_pb2.Message'], None] = None,
+        **kwargs,
+    ):
+        """Use a list of lines as the index source for indexing on the current flow
 
         :param lines: a list of strings, each is considered as d document
         :param filepath: a text file that each line contains a document
@@ -652,14 +751,24 @@ class Flow(ExitStack):
         :param kwargs: accepts all keyword arguments of `jina client` CLI
         """
         from ..clients.python.io import input_lines
-        self._get_client(**kwargs).index(input_lines(lines, filepath, size, sampling_rate, read_mode), output_fn,
-                                         **kwargs)
 
-    def index_files(self, patterns: Union[str, List[str]], recursive: bool = True,
-                    size: int = None, sampling_rate: float = None, read_mode: str = None,
-                    output_fn: Callable[['jina_pb2.Message'], None] = None,
-                    **kwargs):
-        """ Use a set of files as the index source for indexing on the current flow
+        self._get_client(**kwargs).index(
+            input_lines(lines, filepath, size, sampling_rate, read_mode),
+            output_fn,
+            **kwargs,
+        )
+
+    def index_files(
+        self,
+        patterns: Union[str, List[str]],
+        recursive: bool = True,
+        size: int = None,
+        sampling_rate: float = None,
+        read_mode: str = None,
+        output_fn: Callable[['jina_pb2.Message'], None] = None,
+        **kwargs,
+    ):
+        """Use a set of files as the index source for indexing on the current flow
 
         :param patterns: The pattern may contain simple shell-style wildcards, e.g. '\*.py', '[\*.zip, \*.gz]'
         :param recursive: If recursive is true, the pattern '**' will match any files and
@@ -672,14 +781,24 @@ class Flow(ExitStack):
         :param kwargs: accepts all keyword arguments of `jina client` CLI
         """
         from ..clients.python.io import input_files
-        self._get_client(**kwargs).index(input_files(patterns, recursive, size, sampling_rate, read_mode), output_fn,
-                                         **kwargs)
 
-    def search_files(self, patterns: Union[str, List[str]], recursive: bool = True,
-                     size: int = None, sampling_rate: float = None, read_mode: str = None,
-                     output_fn: Callable[['jina_pb2.Message'], None] = None,
-                     **kwargs):
-        """ Use a set of files as the query source for searching on the current flow
+        self._get_client(**kwargs).index(
+            input_files(patterns, recursive, size, sampling_rate, read_mode),
+            output_fn,
+            **kwargs,
+        )
+
+    def search_files(
+        self,
+        patterns: Union[str, List[str]],
+        recursive: bool = True,
+        size: int = None,
+        sampling_rate: float = None,
+        read_mode: str = None,
+        output_fn: Callable[['jina_pb2.Message'], None] = None,
+        **kwargs,
+    ):
+        """Use a set of files as the query source for searching on the current flow
 
         :param patterns: The pattern may contain simple shell-style wildcards, e.g. '\*.py', '[\*.zip, \*.gz]'
         :param recursive: If recursive is true, the pattern '**' will match any files and
@@ -692,14 +811,24 @@ class Flow(ExitStack):
         :param kwargs: accepts all keyword arguments of `jina client` CLI
         """
         from ..clients.python.io import input_files
-        self._get_client(**kwargs).search(input_files(patterns, recursive, size, sampling_rate, read_mode), output_fn,
-                                          **kwargs)
 
-    def search_lines(self, filepath: str = None, lines: Iterator[str] = None, size: int = None,
-                     sampling_rate: float = None, read_mode='r',
-                     output_fn: Callable[['jina_pb2.Message'], None] = None,
-                     **kwargs):
-        """ Use a list of files as the query source for searching on the current flow
+        self._get_client(**kwargs).search(
+            input_files(patterns, recursive, size, sampling_rate, read_mode),
+            output_fn,
+            **kwargs,
+        )
+
+    def search_lines(
+        self,
+        filepath: str = None,
+        lines: Iterator[str] = None,
+        size: int = None,
+        sampling_rate: float = None,
+        read_mode='r',
+        output_fn: Callable[['jina_pb2.Message'], None] = None,
+        **kwargs,
+    ):
+        """Use a list of files as the query source for searching on the current flow
 
         :param filepath: a text file that each line contains a document
         :param lines: a list of strings, each is considered as d document
@@ -711,13 +840,20 @@ class Flow(ExitStack):
         :param kwargs: accepts all keyword arguments of `jina client` CLI
         """
         from ..clients.python.io import input_lines
-        self._get_client(**kwargs).search(input_lines(lines, filepath, size, sampling_rate, read_mode), output_fn,
-                                          **kwargs)
+
+        self._get_client(**kwargs).search(
+            input_lines(lines, filepath, size, sampling_rate, read_mode),
+            output_fn,
+            **kwargs,
+        )
 
     @deprecated_alias(buffer='input_fn', callback='output_fn')
-    def index(self, input_fn: Union[Iterator[Union['jina_pb2.Document', bytes]], Callable] = None,
-              output_fn: Callable[['jina_pb2.Message'], None] = None,
-              **kwargs):
+    def index(
+        self,
+        input_fn: Union[Iterator[Union['jina_pb2.Document', bytes]], Callable] = None,
+        output_fn: Callable[['jina_pb2.Message'], None] = None,
+        **kwargs,
+    ):
         """Do indexing on the current flow
 
         Example,
@@ -755,9 +891,12 @@ class Flow(ExitStack):
         self._get_client(**kwargs).index(input_fn, output_fn, **kwargs)
 
     @deprecated_alias(buffer='input_fn', callback='output_fn')
-    def search(self, input_fn: Union[Iterator[Union['jina_pb2.Document', bytes]], Callable] = None,
-               output_fn: Callable[['jina_pb2.Message'], None] = None,
-               **kwargs):
+    def search(
+        self,
+        input_fn: Union[Iterator[Union['jina_pb2.Document', bytes]], Callable] = None,
+        output_fn: Callable[['jina_pb2.Message'], None] = None,
+        **kwargs,
+    ):
         """Do searching on the current flow
 
         It will start a :py:class:`CLIClient` and call :py:func:`search`.
@@ -796,9 +935,19 @@ class Flow(ExitStack):
         self._get_client(**kwargs).search(input_fn, output_fn, **kwargs)
 
     @deprecated_alias(buffer='input_fn', callback='output_fn')
-    def evaluate(self, input_fn: Union[Iterator[Tuple[Union['jina_pb2.Document', bytes], Union['jina_pb2.Document', bytes]]], Callable] = None,
-                 output_fn: Callable[['jina_pb2.Message'], None] = None,
-                 **kwargs):
+    def evaluate(
+        self,
+        input_fn: Union[
+            Iterator[
+                Tuple[
+                    Union['jina_pb2.Document', bytes], Union['jina_pb2.Document', bytes]
+                ]
+            ],
+            Callable,
+        ] = None,
+        output_fn: Callable[['jina_pb2.Message'], None] = None,
+        **kwargs,
+    ):
         """Do evaluation on the current flow
 
         It will start a :py:class:`CLIClient` and call :py:func:`evaluate`.
@@ -836,11 +985,14 @@ class Flow(ExitStack):
         """
         self._get_client(**kwargs).evaluate(input_fn, output_fn, **kwargs)
 
-    def plot(self, output: str = None,
-             image_type: str = 'svg',
-             vertical_layout: bool = False,
-             inline_display: bool = True,
-             copy_flow: bool = False) -> 'Flow':
+    def plot(
+        self,
+        output: str = None,
+        image_type: str = 'svg',
+        vertical_layout: bool = False,
+        inline_display: bool = True,
+        copy_flow: bool = False,
+    ) -> 'Flow':
         """
         Visualize the flow up to the current point
         If a file name is provided it will create a jpg image with that name,
@@ -865,9 +1017,11 @@ class Flow(ExitStack):
         """
 
         op_flow = copy.deepcopy(self) if copy_flow else self
-        mermaid_graph = ["%%{init: {'theme': 'base', "
-                         "'themeVariables': { 'primaryColor': '#32C8CD', "
-                         "'edgeLabelBackground':'#ff6666', 'clusterBkg': '#FFCC66'}}}%%"]
+        mermaid_graph = [
+            "%%{init: {'theme': 'base', "
+            "'themeVariables': { 'primaryColor': '#32C8CD', "
+            "'edgeLabelBackground':'#ff6666', 'clusterBkg': '#FFCC66'}}}%%"
+        ]
         mermaid_graph.append('graph TD' if vertical_layout else 'graph LR')
 
         start_repl = {}
@@ -881,8 +1035,14 @@ class Flow(ExitStack):
                 p_e = '(%s)'
                 for j in range(v._args.parallel):
                     r = node + '_%d' % j
-                    mermaid_graph.append('\t%s%s:::pea-->%s%s:::pea' % (head_router, p_r % 'head', r, p_e % r))
-                    mermaid_graph.append('\t%s%s:::pea-->%s%s:::pea' % (r, p_e % r, tail_router, p_r % 'tail'))
+                    mermaid_graph.append(
+                        '\t%s%s:::pea-->%s%s:::pea'
+                        % (head_router, p_r % 'head', r, p_e % r)
+                    )
+                    mermaid_graph.append(
+                        '\t%s%s:::pea-->%s%s:::pea'
+                        % (r, p_e % r, tail_router, p_r % 'tail')
+                    )
                 mermaid_graph.append('end')
                 start_repl[node] = (tail_router, '((fa:fa-random))')
                 end_repl[node] = (head_router, '((fa:fa-random))')
@@ -898,7 +1058,9 @@ class Flow(ExitStack):
 
                 _s = start_repl.get(need, (need, f'({need})'))
                 _e = end_repl.get(node, (node, f'({node})'))
-                mermaid_graph.append(f'{_s[0]}{_s[1]}:::pod --> {edge_str}{_e[0]}{_e[1]}:::pod')
+                mermaid_graph.append(
+                    f'{_s[0]}{_s[1]}:::pod --> {edge_str}{_e[0]}{_e[1]}:::pod'
+                )
         mermaid_graph.append('classDef pod fill:#32C8CD,stroke:#009999')
         mermaid_graph.append('classDef pea fill:#009999,stroke:#1E6E73')
         mermaid_str = '\n'.join(mermaid_graph)
@@ -951,13 +1113,17 @@ class Flow(ExitStack):
             with open(output, 'wb') as fp:
                 fp.write(urlopen(req).read())
         except:
-            self.logger.error('can not download image, please check your graph and the network connections')
+            self.logger.error(
+                'can not download image, please check your graph and the network connections'
+            )
 
     def dry_run(self, **kwargs):
         """Send a DRYRUN request to this flow, passing through all pods in this flow,
         useful for testing connectivity and debugging"""
-        self.logger.warning('calling dry_run() on a flow is depreciated, it will be removed in the future version. '
-                            'calling index(), search(), train() will trigger a dry_run()')
+        self.logger.warning(
+            'calling dry_run() on a flow is depreciated, it will be removed in the future version. '
+            'calling index(), search(), train() will trigger a dry_run()'
+        )
 
     @build_required(FlowBuildLevel.GRAPH)
     def to_swarm_yaml(self, path: TextIO):
@@ -966,13 +1132,12 @@ class Flow(ExitStack):
 
         :param path: the output yaml path
         """
-        swarm_yml = {'version': '3.4',
-                     'services': {}}
+        swarm_yml = {'version': '3.4', 'services': {}}
 
         for k, v in self._pod_nodes.items():
             swarm_yml['services'][k] = {
                 'command': v.to_cli_command(),
-                'deploy': {'parallel': 1}
+                'deploy': {'parallel': 1},
             }
 
         yaml.dump(swarm_yml, path)
@@ -993,8 +1158,10 @@ class Flow(ExitStack):
     def block(self):
         """Block the process until user hits KeyboardInterrupt """
         try:
-            self.logger.success(f'flow is started at {self.host}:{self.port_expose}, '
-                                f'you can now use client to send request!')
+            self.logger.success(
+                f'flow is started at {self.host}:{self.port_expose}, '
+                f'you can now use client to send request!'
+            )
             threading.Event().wait()
         except KeyboardInterrupt:
             pass

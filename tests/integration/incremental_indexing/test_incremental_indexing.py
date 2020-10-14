@@ -28,8 +28,7 @@ def test_incremental_indexing_vecindexers(tmpdir):
     total_docs = 10
     duplicate_docs, num_uniq_docs = get_duplicate_docs(num_docs=total_docs)
 
-    f = (Flow()
-         .add(uses=os.path.join(cur_dir, 'inc_vectorindexer.yml'), name='vec_idx'))
+    f = Flow().add(uses=os.path.join(cur_dir, 'inc_vectorindexer.yml'), name='vec_idx')
 
     with f:
         f.index(duplicate_docs)
@@ -46,8 +45,7 @@ def test_incremental_indexing_docindexers(tmpdir):
     total_docs = 10
     duplicate_docs, num_uniq_docs = get_duplicate_docs(num_docs=total_docs)
 
-    f = (Flow()
-         .add(uses=os.path.join(cur_dir, 'inc_docindexer.yml'), shards=1))
+    f = Flow().add(uses=os.path.join(cur_dir, 'inc_docindexer.yml'), shards=1)
 
     with f:
         f.index(duplicate_docs)
@@ -65,9 +63,11 @@ def test_incremental_indexing_sequential_indexers(tmpdir):
     total_docs = 20
     duplicate_docs, num_uniq_docs = get_duplicate_docs(num_docs=total_docs)
 
-    f = (Flow()
-         .add(uses=os.path.join(cur_dir, 'inc_vectorindexer.yml'), shards=1)
-         .add(uses=os.path.join(cur_dir, 'inc_docindexer.yml'), shards=1))
+    f = (
+        Flow()
+        .add(uses=os.path.join(cur_dir, 'inc_vectorindexer.yml'), shards=1)
+        .add(uses=os.path.join(cur_dir, 'inc_docindexer.yml'), shards=1)
+    )
 
     with f:
         f.index(duplicate_docs[:10])
@@ -90,15 +90,21 @@ def test_incremental_indexing_sequential_indexers_with_shards(tmpdir):
     duplicate_docs, num_uniq_docs = get_duplicate_docs(num_docs=total_docs)
 
     num_shards = 4
-    f = (Flow()
-         .add(uses=os.path.join(cur_dir, 'vectorindexer.yml'),
-              uses_before='_unique',
-              shards=num_shards,
-              separated_workspace=True)
-         .add(uses=os.path.join(cur_dir, 'docindexer.yml'),
-              uses_before='_unique',
-              shards=num_shards,
-              separated_workspace=True))
+    f = (
+        Flow()
+        .add(
+            uses=os.path.join(cur_dir, 'vectorindexer.yml'),
+            uses_before='_unique',
+            shards=num_shards,
+            separated_workspace=True,
+        )
+        .add(
+            uses=os.path.join(cur_dir, 'docindexer.yml'),
+            uses_before='_unique',
+            shards=num_shards,
+            separated_workspace=True,
+        )
+    )
     with f:
         f.index(duplicate_docs[:500])
         f.index(duplicate_docs)
@@ -127,13 +133,16 @@ def test_incremental_indexing_parallel_indexers(tmpdir):
     total_docs = 1000
     duplicate_docs, num_uniq_docs = get_duplicate_docs(num_docs=total_docs)
 
-    f = (Flow()
-         .add(uses=os.path.join(cur_dir, 'inc_vectorindexer.yml'),
-              name='inc_vec')
-         .add(uses=os.path.join(cur_dir, 'inc_docindexer.yml'),
-              name='inc_doc',
-              needs=['gateway'])
-         .add(uses='_merge', needs=['inc_vec', 'inc_doc']))
+    f = (
+        Flow()
+        .add(uses=os.path.join(cur_dir, 'inc_vectorindexer.yml'), name='inc_vec')
+        .add(
+            uses=os.path.join(cur_dir, 'inc_docindexer.yml'),
+            name='inc_doc',
+            needs=['gateway'],
+        )
+        .add(uses='_merge', needs=['inc_vec', 'inc_doc'])
+    )
     with f:
         f.index(duplicate_docs[:500])
         f.index(duplicate_docs)
@@ -156,20 +165,25 @@ def test_incremental_indexing_parallel_indexers_with_shards(tmpdir):
 
     num_shards = 4
 
-    f = (Flow()
-         .add(uses=os.path.join(cur_dir, 'vectorindexer.yml'),
-              uses_before='_unique',
-              shards=num_shards,
-              name='inc_vec',
-              separated_workspace=True)
-         .add(uses=os.path.join(cur_dir, 'docindexer.yml'),
-              uses_before='_unique',
-              shards=num_shards,
-              name='inc_doc',
-              needs=['gateway'],
-              separated_workspace=True)
-         .add(uses='_merge',
-              needs=['inc_vec', 'inc_doc']))
+    f = (
+        Flow()
+        .add(
+            uses=os.path.join(cur_dir, 'vectorindexer.yml'),
+            uses_before='_unique',
+            shards=num_shards,
+            name='inc_vec',
+            separated_workspace=True,
+        )
+        .add(
+            uses=os.path.join(cur_dir, 'docindexer.yml'),
+            uses_before='_unique',
+            shards=num_shards,
+            name='inc_doc',
+            needs=['gateway'],
+            separated_workspace=True,
+        )
+        .add(uses='_merge', needs=['inc_vec', 'inc_doc'])
+    )
 
     with f:
         f.index(duplicate_docs[:500])

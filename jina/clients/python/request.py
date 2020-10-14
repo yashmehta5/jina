@@ -16,14 +16,20 @@ from ...logging import default_logger
 from ...proto import jina_pb2, uid
 
 
-def _fill_document(document: 'jina_pb2.Document',
-                   content: Union['jina_pb2.Document', 'np.ndarray', bytes, str, Tuple[
-                       Union['jina_pb2.Document', bytes], Union['jina_pb2.Document', bytes]]],
-                   docs_in_same_batch: int,
-                   mime_type: str,
-                   buffer_sniff: bool,
-                   override_doc_id: bool = True
-                   ):
+def _fill_document(
+    document: 'jina_pb2.Document',
+    content: Union[
+        'jina_pb2.Document',
+        'np.ndarray',
+        bytes,
+        str,
+        Tuple[Union['jina_pb2.Document', bytes], Union['jina_pb2.Document', bytes]],
+    ],
+    docs_in_same_batch: int,
+    mime_type: str,
+    buffer_sniff: bool,
+    override_doc_id: bool = True,
+):
     if isinstance(content, jina_pb2.Document):
         document.CopyFrom(content)
     elif isinstance(content, np.ndarray):
@@ -42,10 +48,10 @@ def _fill_document(document: 'jina_pb2.Document',
     elif isinstance(content, str):
         scheme = urllib.parse.urlparse(content).scheme
         if (
-                (scheme in {'http', 'https'} and is_url(content))
-                or (scheme in {'data'})
-                or os.path.exists(content)
-                or os.access(os.path.dirname(content), os.W_OK)
+            (scheme in {'http', 'https'} and is_url(content))
+            or (scheme in {'data'})
+            or os.path.exists(content)
+            or os.access(os.path.dirname(content), os.W_OK)
         ):
             document.uri = content
             mime_type = guess_mime(content)
@@ -67,17 +73,25 @@ def _fill_document(document: 'jina_pb2.Document',
         document.id = uid.new_doc_id(document)
 
 
-def _generate(data: Union[Iterator[Union['jina_pb2.Document', bytes]], Iterator[
-    Tuple[Union['jina_pb2.Document', bytes], Union['jina_pb2.Document', bytes]]], Iterator['np.ndarray'], Iterator[
-                              str], 'np.ndarray',],
-              batch_size: int = 0, mode: ClientMode = ClientMode.INDEX,
-              top_k: Optional[int] = None,
-              mime_type: str = None,
-              override_doc_id: bool = True,
-              queryset: Iterator['jina_pb2.QueryLang'] = None,
-              *args,
-              **kwargs,
-              ) -> Iterator['jina_pb2.Message']:
+def _generate(
+    data: Union[
+        Iterator[Union['jina_pb2.Document', bytes]],
+        Iterator[
+            Tuple[Union['jina_pb2.Document', bytes], Union['jina_pb2.Document', bytes]]
+        ],
+        Iterator['np.ndarray'],
+        Iterator[str],
+        'np.ndarray',
+    ],
+    batch_size: int = 0,
+    mode: ClientMode = ClientMode.INDEX,
+    top_k: Optional[int] = None,
+    mime_type: str = None,
+    override_doc_id: bool = True,
+    queryset: Iterator['jina_pb2.QueryLang'] = None,
+    *args,
+    **kwargs,
+) -> Iterator['jina_pb2.Message']:
 
     buffer_sniff = False
 
@@ -120,32 +134,37 @@ def _generate(data: Union[Iterator[Union['jina_pb2.Document', bytes]], Iterator[
             # TODO:
             if mode != ClientMode.EVALUATE:
                 d = getattr(req, str(mode).lower()).docs.add()
-                _fill_document(document=d,
-                               content=content,
-                               docs_in_same_batch=batch_size,
-                               mime_type=mime_type,
-                               buffer_sniff=buffer_sniff,
-                               override_doc_id=override_doc_id
-                               )
+                _fill_document(
+                    document=d,
+                    content=content,
+                    docs_in_same_batch=batch_size,
+                    mime_type=mime_type,
+                    buffer_sniff=buffer_sniff,
+                    override_doc_id=override_doc_id,
+                )
             else:
-                assert len(content) == 2, 'You are passing an Evaluation Request without providing two parts (a ' \
-                                          'document and its groundtruth) '
+                assert len(content) == 2, (
+                    'You are passing an Evaluation Request without providing two parts (a '
+                    'document and its groundtruth) '
+                )
                 d = getattr(req, str(mode).lower()).docs.add()
-                _fill_document(document=d,
-                               content=content[0],
-                               docs_in_same_batch=batch_size,
-                               mime_type=mime_type,
-                               buffer_sniff=buffer_sniff,
-                               override_doc_id=override_doc_id
-                               )
+                _fill_document(
+                    document=d,
+                    content=content[0],
+                    docs_in_same_batch=batch_size,
+                    mime_type=mime_type,
+                    buffer_sniff=buffer_sniff,
+                    override_doc_id=override_doc_id,
+                )
                 groundtruth = getattr(req, str(mode).lower()).groundtruths.add()
-                _fill_document(document=groundtruth,
-                               content=content[1],
-                               docs_in_same_batch=batch_size,
-                               mime_type=mime_type,
-                               buffer_sniff=buffer_sniff,
-                               override_doc_id=override_doc_id
-                               )
+                _fill_document(
+                    document=groundtruth,
+                    content=content[1],
+                    docs_in_same_batch=batch_size,
+                    mime_type=mime_type,
+                    buffer_sniff=buffer_sniff,
+                    override_doc_id=override_doc_id,
+                )
         yield req
 
 

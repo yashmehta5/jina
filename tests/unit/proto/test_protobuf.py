@@ -6,7 +6,6 @@ from google.protobuf.json_format import MessageToJson, Parse
 
 
 class ProtobufTestCase(JinaTestCase):
-
     def test_tags(self):
         d = Document()
         d.tags['int'] = 1  # will convert to float!!!
@@ -24,7 +23,6 @@ class ProtobufTestCase(JinaTestCase):
         # can be used as a dict
         for k, v in d2.tags['nested'].items():
             print(f'{k}:{v}')
-
 
 
 if __name__ == '__main__':

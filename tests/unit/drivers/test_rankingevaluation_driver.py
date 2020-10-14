@@ -15,7 +15,7 @@ class MockPrecisionEvaluator(BaseRankingEvaluator):
 
     def evaluate(self, matches_ids, groundtruth_ids, *args, **kwargs) -> float:
         ret = 0.0
-        for doc_id in matches_ids[:self.eval_at]:
+        for doc_id in matches_ids[: self.eval_at]:
             if doc_id in groundtruth_ids:
                 ret += 1.0
 
@@ -28,7 +28,6 @@ class MockPrecisionEvaluator(BaseRankingEvaluator):
 
 
 class SimpleEvaluateDriver(RankingEvaluationDriver):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -66,7 +65,6 @@ def test_evaluate_driver():
 
 
 class SimpleChunkEvaluateDriver(RankingEvaluationDriver):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.eval_request = None
